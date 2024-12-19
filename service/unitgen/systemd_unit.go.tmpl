@@ -1,0 +1,18 @@
+[Unit]
+Description={{.Description}}
+After=network.target
+Wants=network-online.target
+
+[Service]
+Restart=always
+Type=simple
+ExecStart={{.Exec}}
+{{if .WorkingDirectory}}
+WorkingDirectory={{.WorkingDirectory}}
+{{end}}
+{{range $envName, $envValue := .Environment}}
+Environment={{$envName}}={{$envValue}}
+{{end}}
+
+[Install]
+WantedBy=multi-user.target
