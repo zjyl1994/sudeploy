@@ -17,3 +17,8 @@ type SSHConf struct {
 	Server string `json:"server,omitempty"`
 	User   string `json:"user,omitempty"`
 }
+
+type LocalConf struct {
+	Binary string            `json:"binary,omitempty"`
+	Upload map[string]string `json:"upload,omitempty"`
+}
