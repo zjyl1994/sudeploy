@@ -3,6 +3,7 @@ package typedef
 type DeployConf struct {
 	SystemdUnitConf
 	SSHConf
+	LocalConf
 }
 
 type SystemdUnitConf struct {

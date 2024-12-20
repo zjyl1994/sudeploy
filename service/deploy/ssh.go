@@ -5,6 +5,8 @@ import (
 	"os"
 	"os/user"
 	"path/filepath"
+
+	"github.com/melbahja/goph"
 )
 
 func getDefaultSSHPrivateKeyPath() (string, error) {
@@ -30,4 +32,18 @@ func getDefaultSSHPrivateKeyPath() (string, error) {
 	}
 
 	return "", fmt.Errorf("can't find default key")
+}
+
+func uploadTextFile(c *goph.Client, filename, content string) error {
+	sftp, err := c.NewSftp()
+	if err != nil {
+		return err
+	}
+	f, err := sftp.Create(filename)
+	if err != nil {
+		return err
+	}
+	defer f.Close()
+	_, err = f.Write([]byte(content))
+	return err
 }
