@@ -1,0 +1,19 @@
+#!/bin/bash
+set -e
+echo "Deploying {{.Name}}"
+{{if .Install}}
+systemctl daemon-reload
+{{end}}
+{{if .Running}}
+systemctl stop {{.Name}}
+{{end}}
+mv {{.BinSrc}} {{.BinDst}}
+chmod +x {{.BinDst}}
+systemctl start {{.Name}}
+{{if .Install}}
+systemctl enable {{.Name}}
+{{end}}
+systemctl status {{.Name}}
+
+rm -rf {{.BinSrc}}
+rm -rf $0

@@ -3,12 +3,16 @@ package deploy
 import (
 	"bufio"
 	"bytes"
+	_ "embed"
 	"fmt"
 	"strings"
+	"text/template"
 
 	"github.com/melbahja/goph"
-	"github.com/sirupsen/logrus"
 )
+
+//go:embed script.go.tmpl
+var deployScriptTmpl string
 
 type UnitStatus struct {
 	Exist   bool
@@ -61,32 +65,26 @@ func getUnitInfo(client *goph.Client, unitName string) (map[string]string, error
 	return result, nil
 }
 
-func StartUnit(client *goph.Client, unitName string) error {
-	return unitProcess(client, "systemctl start "+unitName)
-}
-
-func StopUnit(client *goph.Client, unitName string) error {
-	return unitProcess(client, "systemctl stop "+unitName)
-}
-
-func EnableUnit(client *goph.Client, unitName string) error {
-	return unitProcess(client, "systemctl enable "+unitName)
-}
-
-func DaemonReload(client *goph.Client) error {
-	return unitProcess(client, "systemctl daemon-reload")
-}
-
-func unitProcess(client *goph.Client, command string) error {
-	output, err := client.Run(command)
-	if err != nil {
-		logrus.Errorln(command, "Output", string(output))
-		return fmt.Errorf("%s: %w", command, err)
-	}
-	return nil
-}
-
 func commandPathFromExec(exec string) string {
 	parts := strings.Fields(exec)
 	return parts[0]
+}
+
+type deployScriptParam struct {
+	Name    string
+	Install bool
+	Running bool
+	BinSrc  string
+	BinDst  string
+}
+
+func GenDeployScript(param deployScriptParam) (string, error) {
+	tmpl, err := template.New("").Parse(deployScriptTmpl)
+	if err != nil {
+		return "", err
+	}
+
+	var buf bytes.Buffer
+	err = tmpl.Execute(&buf, param)
+	return buf.String(), err
 }
