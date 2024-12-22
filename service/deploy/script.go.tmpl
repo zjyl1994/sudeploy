@@ -13,8 +13,9 @@ systemctl start {{.Name}}
 {{if .Install}}
 systemctl enable {{.Name}}
 {{end}}
-systemctl status {{.Name}}
 
-ls -lh {{.BinDst}}
 rm -rf {{.BinSrc}}
 rm -rf $0
+
+systemctl status {{.Name}}
+echo "Deploy OK!"
