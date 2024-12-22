@@ -1,11 +1,14 @@
 package deploy
 
 import (
+	"io"
 	"math/rand/v2"
+	"os"
 	"path/filepath"
 	"strconv"
 
 	"github.com/melbahja/goph"
+	"github.com/schollz/progressbar/v3"
 	"github.com/sirupsen/logrus"
 	"github.com/zjyl1994/sudeploy/infra/typedef"
 	"github.com/zjyl1994/sudeploy/infra/vars"
@@ -42,7 +45,7 @@ func updateBinary(client *goph.Client, conf *typedef.DeployConf, state UnitStatu
 	tmpBin := "/tmp/sudeploy" + strconv.Itoa(rand.IntN(10000)) + ".bin"
 	binaryPath := commandPathFromExec(conf.Exec)
 	// upload new bin
-	err := client.Upload(conf.Binary, tmpBin)
+	err := uploadBinaryFile(client, conf.Binary, tmpBin)
 	if err != nil {
 		return err
 	}
@@ -77,7 +80,7 @@ func installBinary(client *goph.Client, conf *typedef.DeployConf) error {
 	}
 	// upload new bin
 	tmpBin := "/tmp/sudeploy" + strconv.Itoa(rand.IntN(10000)) + ".bin"
-	err = client.Upload(conf.Binary, tmpBin)
+	err = uploadBinaryFile(client, conf.Binary, tmpBin)
 	if err != nil {
 		return err
 	}
@@ -122,4 +125,37 @@ func uploadTextFile(c *goph.Client, filename, content string) error {
 	defer f.Close()
 	_, err = f.Write([]byte(content))
 	return err
+}
+
+func uploadBinaryFile(c *goph.Client, localPath, remotePath string) (err error) {
+	local, err := os.Open(localPath)
+	if err != nil {
+		return
+	}
+	defer local.Close()
+
+	fi, err := local.Stat()
+	if err != nil {
+		return
+	}
+
+	ftp, err := c.NewSftp()
+	if err != nil {
+		return
+	}
+	defer ftp.Close()
+
+	remote, err := ftp.Create(remotePath)
+	if err != nil {
+		return
+	}
+	defer remote.Close()
+
+	bar := progressbar.DefaultBytes(
+		fi.Size(),
+		"Uploading",
+	)
+
+	_, err = io.Copy(io.MultiWriter(remote, bar), local)
+	return
 }
