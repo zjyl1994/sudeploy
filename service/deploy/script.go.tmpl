@@ -15,5 +15,6 @@ systemctl enable {{.Name}}
 {{end}}
 systemctl status {{.Name}}
 
+ls -lh {{.BinDst}}
 rm -rf {{.BinSrc}}
 rm -rf $0

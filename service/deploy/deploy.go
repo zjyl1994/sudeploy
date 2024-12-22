@@ -13,12 +13,9 @@ import (
 )
 
 func Run(conf *typedef.DeployConf) error {
-	defaultKey, err := getDefaultSSHPrivateKeyPath()
-	if err != nil {
-		return err
-	}
-	logrus.Debugln(defaultKey)
-	auth, err := goph.Key(defaultKey, "")
+	logrus.Infoln("Deploy", conf.Name, "to Remote", conf.Server, "User", conf.User, "Key", conf.Key, "KeyPass", conf.KeyPass != "")
+
+	auth, err := goph.Key(conf.Key, conf.KeyPass)
 	if err != nil {
 		return err
 	}
@@ -33,6 +30,7 @@ func Run(conf *typedef.DeployConf) error {
 		return err
 	}
 
+	logrus.Infof("Remote exist %t,running %t,enabled %t\n", status.Exist, status.Running, status.Enabled)
 	if status.Exist {
 		return updateBinary(client, conf, status)
 	} else {
@@ -97,6 +95,7 @@ func installBinary(client *goph.Client, conf *typedef.DeployConf) error {
 }
 
 func runDeployScript(client *goph.Client, script string) error {
+	logrus.Debugf("Run script:\n%s\n", script)
 	scriptName := "/tmp/sudeploy" + strconv.Itoa(rand.IntN(10000)) + ".sh"
 	err := uploadTextFile(client, scriptName, script)
 	if err != nil {
@@ -104,9 +103,23 @@ func runDeployScript(client *goph.Client, script string) error {
 	}
 	result, err := client.Run("bash " + scriptName)
 	if err != nil {
-		logrus.Errorln("Remote script:", result)
+		logrus.Errorf("Remote script:\n%s\n", string(result))
 		return err
 	}
-	logrus.Infoln("Remote script:", result)
+	logrus.Infof("Remote script:\n%s\n", string(result))
 	return nil
+}
+
+func uploadTextFile(c *goph.Client, filename, content string) error {
+	sftp, err := c.NewSftp()
+	if err != nil {
+		return err
+	}
+	f, err := sftp.Create(filename)
+	if err != nil {
+		return err
+	}
+	defer f.Close()
+	_, err = f.Write([]byte(content))
+	return err
 }
