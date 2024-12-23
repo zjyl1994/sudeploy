@@ -10,10 +10,14 @@ systemctl stop {{.Name}}
 mv {{.BinSrc}} {{.BinDst}}
 chmod +x {{.BinDst}}
 systemctl start {{.Name}}
+
+echo "Wait {{.Name}} start..."
+sleep 3
+systemctl --no-pager status {{.Name}}
+
 {{if .Install}}
 systemctl enable {{.Name}}
 {{end}}
-systemctl status {{.Name}}
 
 rm -rf {{.BinSrc}}
 rm -rf $0
