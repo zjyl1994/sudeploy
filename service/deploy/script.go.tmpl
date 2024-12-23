@@ -1,9 +1,12 @@
 #!/bin/bash
 set -e
-echo "[$(date +"%Y-%m-%d %H:%M:%S")] Deploying {{.Name}} on $(hostname -f)"
 {{if .Install}}
+echo "[$(date +"%Y-%m-%d %H:%M:%S")] Install {{.Name}} on $(hostname -f)"
 systemctl daemon-reload
+{{else}}
+echo "[$(date +"%Y-%m-%d %H:%M:%S")] Upgrade {{.Name}} on $(hostname -f)"
 {{end}}
+
 {{if .Running}}
 systemctl stop {{.Name}}
 {{end}}
