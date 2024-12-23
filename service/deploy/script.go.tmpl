@@ -10,8 +10,11 @@ echo "[$(date +"%Y-%m-%d %H:%M:%S")] Upgrade {{.Name}} on $(hostname -f)"
 {{if .Running}}
 systemctl stop {{.Name}}
 {{end}}
+
 mv {{.BinSrc}} {{.BinDst}}
 chmod +x {{.BinDst}}
+
+{{if .Running}}
 systemctl start {{.Name}}
 
 {{if .WaitSeconds}}
@@ -20,6 +23,11 @@ sleep {{.WaitSeconds}}
 {{end}}
 systemctl --no-pager status {{.Name}}
 
+{{else}}
+echo "[$(date +"%Y-%m-%d %H:%M:%S")] Binary upgraded."
+ls -lh {{.BinDst}}
+{{end}}
+
 {{if .Install}}
 systemctl enable {{.Name}}
 {{end}}
@@ -27,4 +35,4 @@ systemctl enable {{.Name}}
 rm -rf {{.BinSrc}}
 rm -rf $0
 
-echo "[$(date +"%Y-%m-%d %H:%M:%S")] Deploy OK!"
+echo "[$(date +"%Y-%m-%d %H:%M:%S")] OK!"
