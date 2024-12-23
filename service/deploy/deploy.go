@@ -51,10 +51,11 @@ func updateBinary(client *goph.Client, conf *typedef.DeployConf, state UnitStatu
 	}
 	// run deploy script
 	script, err := GenDeployScript(deployScriptParam{
-		Name:    conf.Name,
-		Running: state.Running,
-		BinSrc:  tmpBin,
-		BinDst:  binaryPath,
+		Name:        conf.Name,
+		Running:     state.Running,
+		BinSrc:      tmpBin,
+		BinDst:      binaryPath,
+		WaitSeconds: conf.WaitSeconds,
 	})
 	if err != nil {
 		return err
@@ -64,10 +65,6 @@ func updateBinary(client *goph.Client, conf *typedef.DeployConf, state UnitStatu
 
 func installBinary(client *goph.Client, conf *typedef.DeployConf) error {
 	binaryPath := commandPathFromExec(conf.Exec)
-	err := client.Upload(conf.Binary, binaryPath)
-	if err != nil {
-		return err
-	}
 	// upload unit file
 	unitFile, err := unitgen.Gen(conf.SystemdUnitConf)
 	if err != nil {
@@ -86,10 +83,11 @@ func installBinary(client *goph.Client, conf *typedef.DeployConf) error {
 	}
 	// run deploy script
 	script, err := GenDeployScript(deployScriptParam{
-		Name:    conf.Name,
-		Install: true,
-		BinSrc:  tmpBin,
-		BinDst:  binaryPath,
+		Name:        conf.Name,
+		Install:     true,
+		BinSrc:      tmpBin,
+		BinDst:      binaryPath,
+		WaitSeconds: conf.WaitSeconds,
 	})
 	if err != nil {
 		return err

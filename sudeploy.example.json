@@ -3,5 +3,6 @@
     "description":"This is test unit",
     "exec":"/usr/local/bin/test_unit",
     "server":"192.168.56.101",
-    "binary":"/path/to/test/unit"
+    "binary":"/path/to/test/unit",
+    "wait_seconds":3
 }

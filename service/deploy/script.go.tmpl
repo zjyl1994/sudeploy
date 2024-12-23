@@ -1,6 +1,6 @@
 #!/bin/bash
 set -e
-echo "Deploying {{.Name}}"
+echo "[$(date +"%Y-%m-%d %H:%M:%S")] Deploying {{.Name}} on $(hostname -f)"
 {{if .Install}}
 systemctl daemon-reload
 {{end}}
@@ -11,8 +11,10 @@ mv {{.BinSrc}} {{.BinDst}}
 chmod +x {{.BinDst}}
 systemctl start {{.Name}}
 
-echo "Wait {{.Name}} start..."
-sleep 3
+{{if .WaitSeconds}}
+echo "[$(date +"%Y-%m-%d %H:%M:%S")] Wait {{.Name}} start...(Timeout: {{.WaitSeconds}})"
+sleep {{.WaitSeconds}}
+{{end}}
 systemctl --no-pager status {{.Name}}
 
 {{if .Install}}
@@ -22,5 +24,4 @@ systemctl enable {{.Name}}
 rm -rf {{.BinSrc}}
 rm -rf $0
 
-systemctl status {{.Name}}
-echo "Deploy OK!"
+echo "[$(date +"%Y-%m-%d %H:%M:%S")] Deploy OK!"

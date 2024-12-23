@@ -4,6 +4,7 @@ type DeployConf struct {
 	SystemdUnitConf
 	SSHConf
 	LocalConf
+	WaitSeconds int `json:"wait_seconds,omitempty"`
 }
 
 type SystemdUnitConf struct {

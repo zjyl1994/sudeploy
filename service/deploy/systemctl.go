@@ -71,11 +71,12 @@ func commandPathFromExec(exec string) string {
 }
 
 type deployScriptParam struct {
-	Name    string
-	Install bool
-	Running bool
-	BinSrc  string
-	BinDst  string
+	Name        string
+	Install     bool
+	Running     bool
+	BinSrc      string
+	BinDst      string
+	WaitSeconds int
 }
 
 func GenDeployScript(param deployScriptParam) (string, error) {
