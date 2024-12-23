@@ -65,6 +65,11 @@ func updateBinary(client *goph.Client, conf *typedef.DeployConf, state UnitStatu
 
 func installBinary(client *goph.Client, conf *typedef.DeployConf) error {
 	binaryPath := commandPathFromExec(conf.Exec)
+	for localPath, remotePath := range conf.Upload {
+		if err := uploadBinaryFile(client, localPath, remotePath); err != nil {
+			return err
+		}
+	}
 	// upload unit file
 	unitFile, err := unitgen.Gen(conf.SystemdUnitConf)
 	if err != nil {
@@ -151,7 +156,7 @@ func uploadBinaryFile(c *goph.Client, localPath, remotePath string) (err error) 
 
 	bar := progressbar.DefaultBytes(
 		fi.Size(),
-		"Uploading",
+		filepath.Base(localPath),
 	)
 
 	_, err = io.Copy(io.MultiWriter(remote, bar), local)
