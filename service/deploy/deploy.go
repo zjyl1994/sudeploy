@@ -1,11 +1,14 @@
 package deploy
 
 import (
+	"io"
 	"math/rand/v2"
+	"os"
 	"path/filepath"
 	"strconv"
 
 	"github.com/melbahja/goph"
+	"github.com/schollz/progressbar/v3"
 	"github.com/sirupsen/logrus"
 	"github.com/zjyl1994/sudeploy/infra/typedef"
 	"github.com/zjyl1994/sudeploy/infra/vars"
@@ -13,12 +16,9 @@ import (
 )
 
 func Run(conf *typedef.DeployConf) error {
-	defaultKey, err := getDefaultSSHPrivateKeyPath()
-	if err != nil {
-		return err
-	}
-	logrus.Debugln(defaultKey)
-	auth, err := goph.Key(defaultKey, "")
+	logrus.Infoln("Deploy", conf.Name, "to Remote", conf.Server, "User", conf.User, "Key", conf.Key, "KeyPass", conf.KeyPass != "")
+
+	auth, err := goph.Key(conf.Key, conf.KeyPass)
 	if err != nil {
 		return err
 	}
@@ -33,6 +33,7 @@ func Run(conf *typedef.DeployConf) error {
 		return err
 	}
 
+	logrus.Infof("Remote exist %t,running %t,enabled %t\n", status.Exist, status.Running, status.Enabled)
 	if status.Exist {
 		return updateBinary(client, conf, status)
 	} else {
@@ -44,7 +45,7 @@ func updateBinary(client *goph.Client, conf *typedef.DeployConf, state UnitStatu
 	tmpBin := "/tmp/sudeploy" + strconv.Itoa(rand.IntN(10000)) + ".bin"
 	binaryPath := commandPathFromExec(conf.Exec)
 	// upload new bin
-	err := client.Upload(conf.Binary, tmpBin)
+	err := uploadBinaryFile(client, conf.Binary, tmpBin)
 	if err != nil {
 		return err
 	}
@@ -79,7 +80,7 @@ func installBinary(client *goph.Client, conf *typedef.DeployConf) error {
 	}
 	// upload new bin
 	tmpBin := "/tmp/sudeploy" + strconv.Itoa(rand.IntN(10000)) + ".bin"
-	err = client.Upload(conf.Binary, tmpBin)
+	err = uploadBinaryFile(client, conf.Binary, tmpBin)
 	if err != nil {
 		return err
 	}
@@ -97,6 +98,7 @@ func installBinary(client *goph.Client, conf *typedef.DeployConf) error {
 }
 
 func runDeployScript(client *goph.Client, script string) error {
+	logrus.Debugf("Run script:\n%s\n", script)
 	scriptName := "/tmp/sudeploy" + strconv.Itoa(rand.IntN(10000)) + ".sh"
 	err := uploadTextFile(client, scriptName, script)
 	if err != nil {
@@ -104,9 +106,56 @@ func runDeployScript(client *goph.Client, script string) error {
 	}
 	result, err := client.Run("bash " + scriptName)
 	if err != nil {
-		logrus.Errorln("Remote script:", result)
+		logrus.Errorf("Remote script:\n%s\n", string(result))
 		return err
 	}
-	logrus.Infoln("Remote script:", result)
+	logrus.Infof("Remote script:\n%s\n", string(result))
 	return nil
+}
+
+func uploadTextFile(c *goph.Client, filename, content string) error {
+	sftp, err := c.NewSftp()
+	if err != nil {
+		return err
+	}
+	f, err := sftp.Create(filename)
+	if err != nil {
+		return err
+	}
+	defer f.Close()
+	_, err = f.Write([]byte(content))
+	return err
+}
+
+func uploadBinaryFile(c *goph.Client, localPath, remotePath string) (err error) {
+	local, err := os.Open(localPath)
+	if err != nil {
+		return
+	}
+	defer local.Close()
+
+	fi, err := local.Stat()
+	if err != nil {
+		return
+	}
+
+	ftp, err := c.NewSftp()
+	if err != nil {
+		return
+	}
+	defer ftp.Close()
+
+	remote, err := ftp.Create(remotePath)
+	if err != nil {
+		return
+	}
+	defer remote.Close()
+
+	bar := progressbar.DefaultBytes(
+		fi.Size(),
+		"Uploading",
+	)
+
+	_, err = io.Copy(io.MultiWriter(remote, bar), local)
+	return
 }

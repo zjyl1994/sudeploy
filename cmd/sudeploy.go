@@ -30,7 +30,5 @@ func Run() error {
 		return err
 	}
 
-	logrus.Infoln("Deploying", conf.Name, "to", conf.Server)
-
 	return deploy.Run(conf)
 }

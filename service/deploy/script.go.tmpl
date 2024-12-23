@@ -21,3 +21,6 @@ systemctl enable {{.Name}}
 
 rm -rf {{.BinSrc}}
 rm -rf $0
+
+systemctl status {{.Name}}
+echo "Deploy OK!"
