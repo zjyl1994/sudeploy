@@ -23,7 +23,24 @@ func Run(conf *typedef.DeployConf) error {
 		return err
 	}
 
-	client, err := goph.New(conf.User, conf.Server, auth)
+	callback, err := goph.DefaultKnownHosts()
+	if err != nil {
+		return err
+	}
+
+	port := uint(22)
+	if conf.Port != 0 {
+		port = conf.Port
+	}
+
+	client, err := goph.NewConn(&goph.Config{
+		User:     conf.User,
+		Addr:     conf.Server,
+		Port:     port,
+		Auth:     auth,
+		Timeout:  goph.DefaultTimeout,
+		Callback: callback,
+	})
 	if err != nil {
 		return err
 	}
