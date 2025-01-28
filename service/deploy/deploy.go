@@ -3,6 +3,7 @@ package deploy
 import (
 	"io"
 	"math/rand/v2"
+	"net"
 	"os"
 	"path/filepath"
 	"strconv"
@@ -13,6 +14,7 @@ import (
 	"github.com/zjyl1994/sudeploy/infra/typedef"
 	"github.com/zjyl1994/sudeploy/infra/vars"
 	"github.com/zjyl1994/sudeploy/service/unitgen"
+	"golang.org/x/crypto/ssh"
 )
 
 func Run(conf *typedef.DeployConf) error {
@@ -23,9 +25,17 @@ func Run(conf *typedef.DeployConf) error {
 		return err
 	}
 
-	callback, err := goph.DefaultKnownHosts()
-	if err != nil {
-		return err
+	var hostVerifyFunc ssh.HostKeyCallback
+	if conf.SkipVerify {
+		hostVerifyFunc = func(string, net.Addr, ssh.PublicKey) error {
+			return nil
+		}
+	} else {
+		callback, err := goph.DefaultKnownHosts()
+		if err != nil {
+			return err
+		}
+		hostVerifyFunc = callback
 	}
 
 	port := uint(22)
@@ -39,7 +49,7 @@ func Run(conf *typedef.DeployConf) error {
 		Port:     port,
 		Auth:     auth,
 		Timeout:  goph.DefaultTimeout,
-		Callback: callback,
+		Callback: hostVerifyFunc,
 	})
 	if err != nil {
 		return err

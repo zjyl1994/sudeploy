@@ -16,11 +16,12 @@ type SystemdUnitConf struct {
 }
 
 type SSHConf struct {
-	Server  string `json:"server,omitempty"`
-	Port    uint   `json:"port,omitempty"`
-	User    string `json:"user,omitempty"`
-	Key     string `json:"key,omitempty"`
-	KeyPass string `json:"key_pass,omitempty"`
+	Server     string `json:"server,omitempty"`
+	Port       uint   `json:"port,omitempty"`
+	User       string `json:"user,omitempty"`
+	Key        string `json:"key,omitempty"`
+	KeyPass    string `json:"key_pass,omitempty"`
+	SkipVerify bool   `json:"skip_verify,omitempty"`
 }
 
 type LocalConf struct {
