@@ -18,7 +18,12 @@ import (
 )
 
 func Run(conf *typedef.DeployConf) error {
-	logrus.Infoln("Deploy", conf.Name, "to Remote", conf.Server, "User", conf.User, "Key", conf.Key, "KeyPass", conf.KeyPass != "")
+	port := uint(22)
+	if conf.Port != 0 {
+		port = conf.Port
+	}
+
+	logrus.Infoln("Deploy", conf.Name, "to Remote", conf.Server, conf.Port, "User", conf.User, "Key", conf.Key, "KeyPass", conf.KeyPass != "")
 
 	auth, err := goph.Key(conf.Key, conf.KeyPass)
 	if err != nil {
@@ -36,11 +41,6 @@ func Run(conf *typedef.DeployConf) error {
 			return err
 		}
 		hostVerifyFunc = callback
-	}
-
-	port := uint(22)
-	if conf.Port != 0 {
-		port = conf.Port
 	}
 
 	client, err := goph.NewConn(&goph.Config{
